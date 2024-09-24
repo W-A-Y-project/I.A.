@@ -4,54 +4,55 @@ import nltk
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 import re
-from symspellpy.symspellpy import SymSpell, Verbosity
-import pkg_resources
+from symspellpy.symspellpy import SymSpell
+import importlib.resources
 
 # Usa o português do spaCy
-nlp = spacy.load('pt_core_news_sm')
+nlp = spacy.load('pt_core_news_lg')
 
 # Recursos do NLTK
 nltk.download('punkt')
 nltk.download('stopwords')
 
-# Dicionário de abreviações e as formas completas (É PARA ADICIONAR MAIS CONFORME O NECESSÁRIO!!!!!!!)
+# Dicionário de abreviações e as formas completas
 abbreviation_dict = {
     'DP': 'Delegacia de Polícia',
     'BO': 'Boletim de Ocorrência',
     'CPF': 'Cadastro de Pessoa Física',
     'RG': 'Registro Geral',
-
 }
 
+# Lista de marcas de veículos
+car_brands = [
+    'Aston Martin', 'Audi', 'BMW', 'BYD', 'CAOA Chery', 'Chevrolet',
+    'Citroën', 'Effa', 'Ferrari', 'Fiat', 'Ford', 'Foton', 'GWM',
+    'Honda', 'Hyundai', 'Iveco', 'JAC', 'Jaguar', 'Jeep', 'Kia',
+    'Lamborghini', 'Land Rover', 'Lexus', 'Maserati', 'McLaren',
+    'Mercedes-AMG', 'Mercedes-Benz', 'Mini', 'Mitsubishi', 'Neta',
+    'Nissan', 'Peugeot', 'Porsche', 'RAM', 'Renault', 'Rolls-Royce',
+    'Seres', 'Subaru', 'Suzuki', 'Toyota', 'Volkswagen'
+]
+
 def normalize_abbreviations(text):
-    # Substitui as abreviações para as palavras
     for abbr, full_form in abbreviation_dict.items():
-        text = re.sub(r'\b' + abbr + r'\b', full_form, text)  # Substitui as abreviações exatas
+        text = re.sub(r'\b' + abbr + r'\b', full_form, text)  # Normaliza abreviações
     return text
 
-# Correção ortográfica do SymSpell
 def load_symspell():
-    # Cria uma instância do SymSpell
     symspell = SymSpell(max_dictionary_edit_distance=2, prefix_length=7)
-    
-    # Carrega o dicionário de palavras frequentes
-    dictionary_path = pkg_resources.resource_filename("symspellpy", "frequency_dictionary_pt_br.txt")
-    bigram_path = pkg_resources.resource_filename("symspellpy", "frequency_bigramdictionary_pt_br.txt")
-    
-    symspell.load_dictionary(dictionary_path, term_index=0, count_index=1)
-    symspell.load_bigram_dictionary(bigram_path, term_index=0, count_index=2)
+    with importlib.resources.path("symspellpy", "frequency_dictionary_pt_br.txt") as dictionary_path:
+        symspell.load_dictionary(dictionary_path, term_index=0, count_index=1)
+    with importlib.resources.path("symspellpy", "frequency_bigramdictionary_pt_br.txt") as bigram_path:
+        symspell.load_bigram_dictionary(bigram_path, term_index=0, count_index=2)
     return symspell
 
 def correct_spelling(text, symspell):
-    # Corrige o texto
     suggestions = symspell.lookup_compound(text, max_edit_distance=2)
     return suggestions[0].term if suggestions else text
 
-# Inicia o SymSpell
 symspell = load_symspell()
 
 def read_pdf(pdf_path):
-    # Lê o PDF e retorna o tezto
     with open(pdf_path, 'rb') as pdf_file:
         pdf_reader = PyPDF2.PdfReader(pdf_file)
         text = ''
@@ -61,48 +62,61 @@ def read_pdf(pdf_path):
     return text
 
 def clean_text(text):
-    # Remove caracteres especiais
     text = re.sub(r'\s+', ' ', text)  # Remove espaços desnecessários
-    text = re.sub(r'[^\w\s]', '', text)  # Remove pontuação
-    text = re.sub(r'\d+', '', text)  # Remove os números
+    text = re.sub(r'[^\w\s,.]', '', text)  # Remove pontuação desnecessária
     return text
 
-def tokenize_text(text):
-    # Tokeniza o texto
-    return nltk.word_tokenize(text)
-
-def remove_stopwords(words):
-    # Remove as stopwords
-    stop_words = set(stopwords.words('portuguese'))
-    return [word for word in words if word.lower() not in stop_words]
-
 def lemmatize_text(text):
-    # lematiza o texto usando o spaCy
     doc = nlp(text)
-    return ' '.join([token.lemma_ for token in doc if not token.is_stop])
+    return ' '.join([token.lemma_.lower() for token in doc if not token.is_stop])  # Lematiza e transforma em minúsculas
+
+def classify_vehicle(entities):
+    classified_entities = []
+    for i, (entity, label) in enumerate(entities):
+        # Verifica se a entidade atual é uma marca
+        for brand in car_brands:
+            if brand.lower() in entity.lower():  # Ignora maiúsculas/minúsculas
+                # Adiciona a entidade como veículo
+                classified_entities.append((entity, 'VEÍCULO'))
+                break
+        else:
+            classified_entities.append((entity, label))  # Mantém o rótulo original se não for um veículo
+    return classified_entities
+
+def extract_entities(text):
+    doc = nlp(text)
+    entities = [(ent.text.lower(), ent.label_) for ent in doc.ents]  # Transformar em minúsculas
+    unique_entities = list(set(entities))  # Remove entidades duplicadas
+    unique_entities = classify_vehicle(unique_entities)  # Classifica veículos
+    return unique_entities
 
 def process_pdf(pdf_path):
-    # Aplica as funcionalidades no pdf
     text = read_pdf(pdf_path)
     cleaned_text = clean_text(text)
-    corrected_text = correct_spelling(cleaned_text, symspell)  # Corrige a ortografia do texto
-    normalized_text = normalize_abbreviations(corrected_text)  # Normaliza abreviações
-    lemmatized_text = lemmatize_text(normalized_text)  # Lematiza o texto
-    return lemmatized_text  # Retorna o texto processado
+    corrected_text = correct_spelling(cleaned_text, symspell)
+    normalized_text = normalize_abbreviations(corrected_text)
+    lemmatized_text = lemmatize_text(normalized_text)
+
+    entities = extract_entities(lemmatized_text)
+    # Filtrar entidades indesejadas
+    entities = [(text, label) for text, label in entities if text != 'dp']
+    return lemmatized_text, entities
 
 def vectorize_text(texts):
-    # Vetoriza o texto usando TF-IDF.
     vectorizer = TfidfVectorizer()
     vectors = vectorizer.fit_transform(texts)
     return vectors, vectorizer
 
 # PDF que vai ser lido
-pdf_file = r"Z:\I.A\Design sem nome.pdf"
-processed_text = process_pdf(pdf_file)
+pdf_file = r"Z:\I.A\exemplo.pdf"
+processed_text, extracted_entities = process_pdf(pdf_file)
+
+# Exibe as entidades extraídas
+print("Entidades extraídas: ", extracted_entities)
 
 # Vetorização
-vectors, vectorizer = vectorize_text([processed_text])  # Passando uma lista de textos
-print(vectors.toarray())  # Exibe a matriz de TF-IDF
+vectors, vectorizer = vectorize_text([processed_text])
+print(vectors.toarray())
 
 feature_names = vectorizer.get_feature_names_out()
 print(feature_names)

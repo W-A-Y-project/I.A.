@@ -38,6 +38,7 @@ def normalize_abbreviations(text):
         text = re.sub(r'\b' + abbr + r'\b', full_form, text)  # Normaliza abreviações
     return text
 
+
 def load_symspell():
     symspell = SymSpell(max_dictionary_edit_distance=2, prefix_length=7)
     with importlib.resources.path("symspellpy", "frequency_dictionary_pt_br.txt") as dictionary_path:
@@ -53,42 +54,61 @@ def correct_spelling(text, symspell):
 symspell = load_symspell()
 
 def read_pdf(pdf_path):
-    with open(pdf_path, 'rb') as pdf_file:
-        pdf_reader = PyPDF2.PdfReader(pdf_file)
-        text = ''
-        for page_num in range(len(pdf_reader.pages)):
-            page = pdf_reader.pages[page_num]
-            text += page.extract_text()
-    return text
+    try:
+        with open(pdf_path, 'rb') as pdf_file:
+            pdf_reader = PyPDF2.PdfReader(pdf_file)
+            text = ''
+            for page_num in range(len(pdf_reader.pages)):
+                page = pdf_reader.pages[page_num]
+                text += page.extract_text() or ''  # Caso a extração falhe
+        return text
+    except Exception as e:
+        print(f"Erro ao ler o PDF: {e}")
+        return ""
 
 def clean_text(text):
-    text = re.sub(r'\s+', ' ', text)  # Remove espaços desnecessários
+    text = re.sub(r'\s+', ' ', text)  # Remove múltiplos espaços
+    text = text.strip()  # Remove espaços no início e no fim
     text = re.sub(r'[^\w\s,.]', '', text)  # Remove pontuação desnecessária
+    text = re.sub(r'\d+', '', text)  # Remove números, se não forem relevantes
     return text
 
 def lemmatize_text(text):
     doc = nlp(text)
-    return ' '.join([token.lemma_.lower() for token in doc if not token.is_stop])  # Lematiza e transforma em minúsculas
+    return ' '.join([token.lemma_.lower() for token in doc if not token.is_stop and token.lemma_ not in stopwords.words('portuguese')])
 
 def classify_vehicle(entities):
     classified_entities = []
     for i, (entity, label) in enumerate(entities):
-        # Verifica se a entidade atual é uma marca
+        # Verifica se a entidade é uma marca
         for brand in car_brands:
             if brand.lower() in entity.lower():  # Ignora maiúsculas/minúsculas
-                # Adiciona a entidade como veículo
                 classified_entities.append((entity, 'VEÍCULO'))
                 break
         else:
-            classified_entities.append((entity, label))  # Mantém o rótulo original se não for um veículo
+            classified_entities.append((entity, label))  # Mantém original se não for um veículo
     return classified_entities
 
+def separate_person_info(entity):
+    if 'cpf' in entity and 'rg' in entity:
+        return entity.replace('cpf', '').replace('rg', '').strip(), 'CPF e RG'
+    return entity, None
+
+# Extrai as entidades
 def extract_entities(text):
     doc = nlp(text)
-    entities = [(ent.text.lower(), ent.label_) for ent in doc.ents]  # Transformar em minúsculas
-    unique_entities = list(set(entities))  # Remove entidades duplicadas
+    entities = [(ent.text.lower(), ent.label_) for ent in doc.ents]
+    unique_entities = list({entity[0]: entity for entity in entities}.values())  # Remove duplicatas
     unique_entities = classify_vehicle(unique_entities)  # Classifica veículos
-    return unique_entities
+
+    processed_entities = []
+    for entity, label in unique_entities:
+        if label == 'PER':
+            processed_entities.append((entity, 'PESSOA')) # Classifica PER como PESSOA
+        else:
+            processed_entities.append((entity, label))
+    return processed_entities
+
 
 def process_pdf(pdf_path):
     text = read_pdf(pdf_path)
@@ -98,17 +118,18 @@ def process_pdf(pdf_path):
     lemmatized_text = lemmatize_text(normalized_text)
 
     entities = extract_entities(lemmatized_text)
-    # Filtrar entidades indesejadas
+    # Filtrar entidades 
     entities = [(text, label) for text, label in entities if text != 'dp']
     return lemmatized_text, entities
 
+# Função da Vetorização
 def vectorize_text(texts):
     vectorizer = TfidfVectorizer()
     vectors = vectorizer.fit_transform(texts)
     return vectors, vectorizer
 
 # PDF que vai ser lido
-pdf_file = r"Z:\I.A\exemplo.pdf"
+pdf_file = r"Z:\I.A\exemplo2.pdf"
 processed_text, extracted_entities = process_pdf(pdf_file)
 
 # Exibe as entidades extraídas

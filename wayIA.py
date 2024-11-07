@@ -4,17 +4,19 @@ import nltk
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 import re
-from symspellpy.symspellpy import SymSpell
+from symspellpy import SymSpell, Verbosity
 import importlib.resources
 
-# Usa o português do spaCy
+# Configurações iniciais
 nlp = spacy.load('pt_core_news_lg')
 
-# Recursos do NLTK
-nltk.download('punkt')
-nltk.download('stopwords')
+# Baixar stopwords se necessário
+try:
+    stopwords.words('portuguese')
+except LookupError:
+    nltk.download('stopwords')
 
-# Dicionário de abreviações e as formas completas
+# Dicionário de abreviações
 abbreviation_dict = {
     'DP': 'Delegacia de Polícia',
     'BO': 'Boletim de Ocorrência',
@@ -35,9 +37,8 @@ car_brands = [
 
 def normalize_abbreviations(text):
     for abbr, full_form in abbreviation_dict.items():
-        text = re.sub(r'\b' + abbr + r'\b', full_form, text)  # Normaliza abreviações
+        text = re.sub(r'\b' + abbr + r'\b', full_form, text)
     return text
-
 
 def load_symspell():
     symspell = SymSpell(max_dictionary_edit_distance=2, prefix_length=7)
@@ -57,20 +58,16 @@ def read_pdf(pdf_path):
     try:
         with open(pdf_path, 'rb') as pdf_file:
             pdf_reader = PyPDF2.PdfReader(pdf_file)
-            text = ''
-            for page_num in range(len(pdf_reader.pages)):
-                page = pdf_reader.pages[page_num]
-                text += page.extract_text() or ''  # Caso a extração falhe
+            text = ''.join([page.extract_text() or '' for page in pdf_reader.pages])
         return text
     except Exception as e:
         print(f"Erro ao ler o PDF: {e}")
         return ""
 
 def clean_text(text):
-    text = re.sub(r'\s+', ' ', text)  # Remove múltiplos espaços
-    text = text.strip()  # Remove espaços no início e no fim
-    text = re.sub(r'[^\w\s,.]', '', text)  # Remove pontuação desnecessária
-    text = re.sub(r'\d+', '', text)  # Remove números, se não forem relevantes
+    text = re.sub(r'\s+', ' ', text).strip()
+    text = re.sub(r'[^\w\s,.]', '', text)
+    text = re.sub(r'\d+', '', text)
     return text
 
 def lemmatize_text(text):
@@ -78,66 +75,41 @@ def lemmatize_text(text):
     return ' '.join([token.lemma_.lower() for token in doc if not token.is_stop and token.lemma_ not in stopwords.words('portuguese')])
 
 def classify_vehicle(entities):
-    classified_entities = []
-    for i, (entity, label) in enumerate(entities):
-        # Verifica se a entidade é uma marca
-        for brand in car_brands:
-            if brand.lower() in entity.lower():  # Ignora maiúsculas/minúsculas
-                classified_entities.append((entity, 'VEÍCULO'))
-                break
-        else:
-            classified_entities.append((entity, label))  # Mantém original se não for um veículo
-    return classified_entities
+    return [(entity, 'VEÍCULO' if any(brand.lower() in entity.lower() for brand in car_brands) else label) for entity, label in entities]
 
-def separate_person_info(entity):
-    if 'cpf' in entity and 'rg' in entity:
-        return entity.replace('cpf', '').replace('rg', '').strip(), 'CPF e RG'
-    return entity, None
-
-# Extrai as entidades
 def extract_entities(text):
     doc = nlp(text)
     entities = [(ent.text.lower(), ent.label_) for ent in doc.ents]
-    unique_entities = list({entity[0]: entity for entity in entities}.values())  # Remove duplicatas
-    unique_entities = classify_vehicle(unique_entities)  # Classifica veículos
-
-    processed_entities = []
-    for entity, label in unique_entities:
-        if label == 'PER':
-            processed_entities.append((entity, 'PESSOA')) # Classifica PER como PESSOA
-        else:
-            processed_entities.append((entity, label))
-    return processed_entities
-
+    unique_entities = list({entity[0]: entity for entity in entities}.values())
+    unique_entities = classify_vehicle(unique_entities)
+    return [(entity, 'PESSOA' if label == 'PER' else label) for entity, label in unique_entities]
 
 def process_pdf(pdf_path):
     text = read_pdf(pdf_path)
+    if not text:
+        return "", []
+
     cleaned_text = clean_text(text)
     corrected_text = correct_spelling(cleaned_text, symspell)
     normalized_text = normalize_abbreviations(corrected_text)
     lemmatized_text = lemmatize_text(normalized_text)
 
     entities = extract_entities(lemmatized_text)
-    # Filtrar entidades 
     entities = [(text, label) for text, label in entities if text != 'dp']
     return lemmatized_text, entities
 
-# Função da Vetorização
 def vectorize_text(texts):
     vectorizer = TfidfVectorizer()
     vectors = vectorizer.fit_transform(texts)
     return vectors, vectorizer
 
-# PDF que vai ser lido
+# Teste de processamento do PDF
 pdf_file = r"Z:\I.A\exemplo2.pdf"
 processed_text, extracted_entities = process_pdf(pdf_file)
 
-# Exibe as entidades extraídas
 print("Entidades extraídas: ", extracted_entities)
 
 # Vetorização
 vectors, vectorizer = vectorize_text([processed_text])
 print(vectors.toarray())
-
-feature_names = vectorizer.get_feature_names_out()
-print(feature_names)
+print(vectorizer.get_feature_names_out())

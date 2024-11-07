@@ -4,19 +4,16 @@ import nltk
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 import re
-from symspellpy import SymSpell, Verbosity
+from symspellpy import SymSpell
 import importlib.resources
 
-# Configurações iniciais
 nlp = spacy.load('pt_core_news_lg')
 
-# Baixar stopwords se necessário
 try:
     stopwords.words('portuguese')
 except LookupError:
     nltk.download('stopwords')
 
-# Dicionário de abreviações
 abbreviation_dict = {
     'DP': 'Delegacia de Polícia',
     'BO': 'Boletim de Ocorrência',
@@ -24,7 +21,6 @@ abbreviation_dict = {
     'RG': 'Registro Geral',
 }
 
-# Lista de marcas de veículos
 car_brands = [
     'Aston Martin', 'Audi', 'BMW', 'BYD', 'CAOA Chery', 'Chevrolet',
     'Citroën', 'Effa', 'Ferrari', 'Fiat', 'Ford', 'Foton', 'GWM',
@@ -103,13 +99,11 @@ def vectorize_text(texts):
     vectors = vectorizer.fit_transform(texts)
     return vectors, vectorizer
 
-# Teste de processamento do PDF
 pdf_file = r"Z:\I.A\exemplo2.pdf"
 processed_text, extracted_entities = process_pdf(pdf_file)
 
 print("Entidades extraídas: ", extracted_entities)
 
-# Vetorização
 vectors, vectorizer = vectorize_text([processed_text])
 print(vectors.toarray())
 print(vectorizer.get_feature_names_out())

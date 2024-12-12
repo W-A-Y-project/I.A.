@@ -48,17 +48,59 @@ def classify_new_pdf(pdf_path, model_path='model.pkl', vectorizer_path='vectoriz
 
 if __name__ == "__main__":
     pdf_files = [
-        "C:/Users/u23523/Downloads/bo.pdf",
-        "C:/Users/u23523/Downloads/cartaIfood.pdf",
-        "C:/Users/u23523/Downloads/Furto Simples.pdf",
-        "C:/Users/u23523/Downloads/Acidente de Trânsito com Vítima.pdf",
-        "C:/Users/u23523/Downloads/Carta de Apresentação Falsa.pdf"
-    ]
-    labels = [1, 0, 1, 1, 0]  
+    "/Users/u23523/Downloads/boletim_verdadeiro_1.pdf",
+    "/Users/u23523/Downloads/boletim_falso_2.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_3.pdf",
+    "/Users/u23523/Downloads/boletim_falso_4.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_5.pdf",
+    "/Users/u23523/Downloads/boletim_falso_6.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_7.pdf",
+    "/Users/u23523/Downloads/boletim_falso_8.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_9.pdf",
+    "/Users/u23523/Downloads/boletim_falso_10.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_11.pdf",
+    "/Users/u23523/Downloads/boletim_falso_12.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_13.pdf",
+    "/Users/u23523/Downloads/boletim_falso_14.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_15.pdf",
+    "/Users/u23523/Downloads/boletim_falso_16.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_17.pdf",
+    "/Users/u23523/Downloads/boletim_falso_18.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_19.pdf",
+    "/Users/u23523/Downloads/boletim_falso_20.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_21.pdf",
+    "/Users/u23523/Downloads/boletim_falso_22.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_23.pdf",
+    "/Users/u23523/Downloads/boletim_falso_24.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_25.pdf",
+    "/Users/u23523/Downloads/boletim_falso_26.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_27.pdf",
+    "/Users/u23523/Downloads/boletim_falso_28.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_29.pdf",
+    "/Users/u23523/Downloads/boletim_falso_30.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_31.pdf",
+    "/Users/u23523/Downloads/boletim_falso_32.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_33.pdf",
+    "/Users/u23523/Downloads/boletim_falso_34.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_35.pdf",
+    "/Users/u23523/Downloads/boletim_falso_36.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_37.pdf",
+    "/Users/u23523/Downloads/boletim_falso_38.pdf",
+    "/Users/u23523/Downloads/boletim_verdadeiro_39.pdf",
+    "/Users/u23523/Downloads/boletim_falso_40.pdf"
+]
+
+    labels = [
+        1, 0, 1, 0, 1, 0, 1, 0, 1, 0,
+        1, 0, 1, 0, 1, 0, 1, 0, 1, 0,
+        1, 0, 1, 0, 1, 0, 1, 0, 1, 0,
+        1, 0, 1, 0, 1, 0, 1, 0, 1, 0
+    ]  
     
   
     train_ia_model(pdf_files, labels)
 
 
-    result = classify_new_pdf("/path/to/new_pdf.pdf")
+    result = classify_new_pdf("/Users/u23523/Downloads/cartaIfood.pdf")
     print(f"Resultado da classificação: {result}")
+

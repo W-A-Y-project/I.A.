@@ -1,19 +1,23 @@
+altgraph @ file:///AppleInternal/Library/BuildRoots/1db8ea6b-8e8d-11ee-9041-cedaeb4cabe2/Library/Caches/com.apple.xbs/Sources/python3/altgraph-0.17.2-py2.py3-none-any.whl
 annotated-types==0.7.0
 blis==1.0.1
 catalogue==2.0.10
 certifi==2024.8.30
-charset-normalizer==3.4.0
+cffi==1.17.0
+charset-normalizer==3.3.2
 click==8.1.7
 cloudpathlib==0.20.0
-colorama==0.4.6
 confection==0.1.5
+cryptography==43.0.0
 cymem==2.0.8
+editdistpy==0.1.5
+future @ file:///AppleInternal/Library/BuildRoots/1db8ea6b-8e8d-11ee-9041-cedaeb4cabe2/Library/Caches/com.apple.xbs/Sources/python3/future-0.18.2-py3-none-any.whl
 idna==3.10
-inexactsearch==1.0.2
 Jinja2==3.1.4
 joblib==1.4.2
 langcodes==3.4.1
 language_data==1.2.0
+macholib @ file:///AppleInternal/Library/BuildRoots/1db8ea6b-8e8d-11ee-9041-cedaeb4cabe2/Library/Caches/com.apple.xbs/Sources/python3/macholib-1.15.2-py2.py3-none-any.whl
 marisa-trie==1.2.1
 markdown-it-py==3.0.0
 MarkupSafe==3.0.2
@@ -21,31 +25,36 @@ mdurl==0.1.2
 murmurhash==1.0.10
 nltk==3.9.1
 numpy==2.0.2
-packaging==24.2
+packaging==24.1
+pdfminer.six==20231228
+pdfplumber==0.11.4
+pillow==10.4.0
 preshed==3.0.9
+pt_core_news_lg @ https://github.com/explosion/spacy-models/releases/download/pt_core_news_lg-3.8.0/pt_core_news_lg-3.8.0-py3-none-any.whl#sha256=2561c9a72a938d37141e9694e1a36d25061a44ce7e4f3bad2d3fa3bb836191af
+pycparser==2.22
 pydantic==2.9.2
 pydantic_core==2.23.4
 Pygments==2.18.0
 PyPDF2==3.0.1
-regex==2024.11.6
+pypdfium2==4.30.0
+pyspellchecker==0.8.1
+regex==2024.9.11
 requests==2.32.3
-rich==13.9.4
+rich==13.9.3
 scikit-learn==1.5.2
-scipy==1.14.1
-setuptools==75.5.0
+scipy==1.13.1
 shellingham==1.5.4
-silpa_common==0.3
+six @ file:///AppleInternal/Library/BuildRoots/1db8ea6b-8e8d-11ee-9041-cedaeb4cabe2/Library/Caches/com.apple.xbs/Sources/python3/six-1.15.0-py2.py3-none-any.whl
 smart-open==7.0.5
-soundex==1.1.3
 spacy==3.8.2
 spacy-legacy==3.0.12
 spacy-loggers==1.0.5
-spellchecker==0.4
 srsly==2.4.8
+symspellpy==6.7.8
 thinc==8.3.2
 threadpoolctl==3.5.0
-tqdm==4.67.0
-typer==0.13.1
+tqdm==4.66.5
+typer==0.12.5
 typing_extensions==4.12.2
 urllib3==2.2.3
 wasabi==1.1.3
